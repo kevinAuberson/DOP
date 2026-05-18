@@ -1,0 +1,12 @@
+services:
+  dop-java-app:
+    image: registry.gitlab.com/kevinauberson/dop-java/app:latest
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    container_name: dop-java-container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"] 
+      interval: 30s 
+      timeout: 10s 
+      retries: 3 

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dop-java-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dop-java
+  template:
+    metadata:
+      labels:
+        app: dop-java
+    spec:
+      containers:
+        - name: dop-java-container
+          image: registry.gitlab.com/kevinauberson/dop-java/app:latest
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: IfNotPresent # Évite de re-télécharger l'image si elle est déjà présente
+      imagePullSecrets:
+        - name: regcred
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dop-java-service
+  labels:
+    app: dop-java
+spec:
+  selector:
+    app: dop-java
+  ports:
+    - port: 80 
+      targetPort: 8080 
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dop-java-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+    - host: dop-java.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dop-java-service
+                port:
+                  number: 80
