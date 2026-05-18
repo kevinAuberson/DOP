@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-frontend
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-frontend
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-frontend
+        image: registry.gitlab.com/kevinauberson/dop-python-kevin/frontend:latest
+        ports:
+        - containerPort: 80
+          name: web
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      imagePullSecrets:
+      - name: regcred
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-backend
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-backend
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      containers:
+      - image: registry.gitlab.com/kevinauberson/dop-python-kevin/backend:latest
+        name: {{ .Release.Name }}-backend
+        env:
+        - name: POSTGRES_HOST
+          value: database
+        - name: POSTGRES_USER
+          valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-configmap
+                key: postgres_user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+              secretKeyRef:
+                name: {{ .Release.Name }}-secret
+                key: postgres_password
+        - name: POSTGRES_DB
+          valueFrom:
+              configMapKeyRef:
+                name: {{ .Release.Name }}-configmap
+                key: postgres_db
+        - name: ROOT_PATH
+          value: /api
+        ports:
+        - containerPort: 80
+          name: web
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-database
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-database
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-database
+    spec:
+      containers:
+        - name: database
+          image: postgres:16-alpine
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-configmap
+                  key: postgres_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: postgres_password
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-configmap
+                  key: postgres_db
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: data
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "250m"
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-database-data-pvc
