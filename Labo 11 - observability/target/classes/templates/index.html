@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css"
+    />
+    <title>Demotory</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="column">
+          <h1>Demotory</h1>
+          <h2>Entries</h2>
+        </div>
+      </div>
+      <div class="row">
+        <div class="column">
+          <table>
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Value</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="entry : ${entries}">
+                <td th:text="${entry.key}"></td>
+                <td th:text="${entry.value}"></td>
+                <td>
+                  <form
+                    style="margin-bottom: unset"
+                    th:action="@{'./{key}'(key=${entry.key})}"
+                    th:method="delete"
+                  >
+                    <input
+                      class="button-outline"
+                      style="margin-bottom: unset"
+                      type="submit"
+                      value="Delete"
+                    />
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="column">
+          <form th:action="@{.}" th:object="${entry}" th:method="post">
+            <fieldset>
+              <label for="keyField">Key</label>
+              <input type="text" id="keyField" th:field="*{key}" />
+              <label for="valueField">Value</label>
+              <input type="text" id="valueField" th:field="*{value}" />
+              <input class="button-primary" type="submit" value="Submit" />
+              <input class="button-clear" type="reset" value="Reset" />
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
